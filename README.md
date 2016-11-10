@@ -8,6 +8,7 @@ Its depends on [Faker Library](https://packagist.org/packages/fzaninotto/faker)
 
 ```sh
 composer require eddmash/powerormfaker
+```
 
 ## Populating Models
 
@@ -29,11 +30,12 @@ $populator->addModel(new Book, 10);
 $insertedPKs = $populator->execute();
 ```
 
-The populator uses name and column type guessers to populate each column with relevant data. For instance, Faker 
-populates a column named `first_name` using the `firstName` formatter, and a column with a `TIMESTAMP` type using the 
-`dateTime` formatter. The resulting models are therefore coherent. If Faker misinterprets a column name, 
-you can still specify a custom closure to be used for populating a particular column, using the third 
-argument to `addModel()`:
+The populator uses name and column type guessers to populate each column with relevant data. 
+For instance, Faker populates a column named `first_name` using the `firstName` formatter, 
+and a column with a `TIMESTAMP` type using the `dateTime` formatter. The resulting models are therefore coherent. 
+
+If Faker misinterprets a column name, you can still specify a custom closure to be used for populating a particular 
+column, using the third argument to `addModel()`:
 
 ```php
 <?php
