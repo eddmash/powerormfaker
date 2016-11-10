@@ -1,0 +1,40 @@
+{
+  "name": "eddmash/powerormfaker",
+  "type": "library",
+  "keywords": [
+    "orm",
+    "php",
+    "faker"
+  ],
+  "description": "powerormfake generates dummy data when using PowerOrm. An extension of Faker library",
+  "homepage": "https://github.com/eddmash/powerormfaker",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "EDDILBERT MACHARIA",
+      "email": "edd.cowan@gmail.com",
+      "homepage": "http://eddmash.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "composer/installers": "~1.0",
+    "fzaninotto/faker": "*"
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Eddmash\\PowerOrmFaker\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0.x-dev"
+    }
+  },
+  "support": {
+    "issues": "https://github.com/eddmash/powerormfaker/issues"
+  }
+}
