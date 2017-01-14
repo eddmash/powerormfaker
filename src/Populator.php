@@ -89,7 +89,7 @@ class Populator
     {
         $insertedEntities = array();
 
-        /** @var $entity EntityPopulator */
+        /* @var $entity EntityPopulator */
         $prevCount = 0;
         $total = count($this->quantities);
         while ($total > $prevCount):

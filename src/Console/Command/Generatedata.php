@@ -64,7 +64,7 @@ class Generatedata extends BaseCommand
 
         endif;
 
-        return $insertedPKs;
+        return;
     }
 
     protected function configure()
