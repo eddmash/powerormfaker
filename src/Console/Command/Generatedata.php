@@ -30,7 +30,7 @@ class Generatedata extends BaseCommand
         $faker = Factory::create();
         $populator = new Populator($faker);
 
-        $models = BaseOrm::getRegistry()->getModels(true);
+        $models = BaseOrm::getRegistry()->getModels();
 
         $number = $input->getOption('records');
         if(!$number):

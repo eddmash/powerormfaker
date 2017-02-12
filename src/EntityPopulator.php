@@ -121,7 +121,7 @@ class EntityPopulator
                 continue;
             endif;
 
-            $fieldName = $field->getColumnName();
+            $fieldName = $field->name;
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
             $index = 0;
@@ -169,15 +169,15 @@ class EntityPopulator
 
         $obj->save();
 
-        $pk = $obj->meta->primaryKey->name;
+//        $pk = $obj->meta->primaryKey->name;
 
-        return $obj->{$pk};
+        return $obj;
 
     }
 
     private function fillColumns($obj, $insertedEntities)
     {
-        foreach ($this->columnFormatters as $field => $format) {
+        foreach ($this->columnFormatters as $fieldName => $format) {
             if (null !== $format) {
                 // Add some extended debugging information to any errors thrown by the formatter
                 try {
@@ -186,12 +186,12 @@ class EntityPopulator
                     throw new \InvalidArgumentException(sprintf(
                         'Failed to generate a value for %s::%s: %s',
                         get_class($obj),
-                        $field,
+                        $fieldName,
                         $ex->getMessage()
                     ));
                 }
 
-                $obj->{$field} = $value;
+                $obj->{$fieldName} = $value;
             }
         }
     }
