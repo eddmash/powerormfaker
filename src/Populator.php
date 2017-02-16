@@ -41,9 +41,13 @@ class Populator
      *
      * @author Eddilbert Macharia (http://eddmash.com) <edd.cowan@gmail.com>
      */
-    public function addModel($entity, $number, $customColumnFormatters = array(),
-                              $customModifiers = array(), $generateId = false)
-    {
+    public function addModel(
+        $entity,
+        $number,
+        $customColumnFormatters = array(),
+        $customModifiers = array(),
+        $generateId = false
+    ) {
         if ($entity instanceof Model):
 
             /** @var $field RelatedField */
@@ -89,7 +93,7 @@ class Populator
     {
         $insertedEntities = array();
 
-        /* @var $entity EntityPopulator */
+        /** @var $entity EntityPopulator */
         $prevCount = 0;
         $total = count($this->quantities);
         while ($total > $prevCount):
@@ -105,6 +109,7 @@ class Populator
                     $progressBar = new ProgressBar($output, $number);
                     for ($i = 0; $i < $number; ++$i) {
                         $entity = $this->entities[$class];
+
                         $insertedEntities[$class][] = $entity->execute($insertedEntities, $generateId);
                         $progressBar->advance();
                     }

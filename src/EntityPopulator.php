@@ -2,6 +2,8 @@
 
 namespace Eddmash\PowerOrmFaker;
 
+use Eddmash\PowerOrm\Model\Field\AutoField;
+use Eddmash\PowerOrm\Model\Field\CharField;
 use Eddmash\PowerOrm\Model\Field\Field;
 use Eddmash\PowerOrm\Model\Model;
 use Faker\Generator;
@@ -100,10 +102,10 @@ class EntityPopulator
         $columnTypeGuesser = new ColumnTypeGuesser($generator);
         /** @var $field Field */
         foreach ($this->class->meta->localFields as $name => $field) {
-            if ($field->primaryKey || $field->isRelation) {
+            if ($field instanceof AutoField || $field->isRelation) {
                 continue;
             }
-            $fieldName = $field->getColumnName();
+            $fieldName = $field->name;
             $size = ($field->hasProperty('maxLength') === true) ? $field->maxLength : null;
 
             if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
@@ -116,6 +118,7 @@ class EntityPopulator
             }
         }
 
+        // take of retionships
         foreach ($this->class->meta->localFields as $name => $field) :
             if ($field->isRelation === false):
                 continue;
@@ -156,11 +159,13 @@ class EntityPopulator
      * @param array $insertedEntities a list of all inserted records ids per model
      * @param bool  $generateId
      *
-     * @return EntityPopulator
+     * @return Model
      */
     public function execute($insertedEntities, $generateId = false)
     {
+
         $class = $this->getClass();
+
         /** @var $obj Model */
         $obj = new $class();
 
@@ -169,13 +174,16 @@ class EntityPopulator
 
         $obj->save();
 
-//        $pk = $obj->meta->primaryKey->name;
-
         return $obj;
 
     }
 
-    private function fillColumns($obj, $insertedEntities)
+    /**
+     * @param Model $obj
+     * @param $insertedEntities
+     * @author: Eddilbert Macharia (http://eddmash.com)<edd.cowan@gmail.com>
+     */
+    private function fillColumns(Model $obj, $insertedEntities)
     {
         foreach ($this->columnFormatters as $fieldName => $format) {
             if (null !== $format) {
@@ -183,17 +191,30 @@ class EntityPopulator
                 try {
                     $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
                 } catch (\InvalidArgumentException $ex) {
-                    throw new \InvalidArgumentException(sprintf(
-                        'Failed to generate a value for %s::%s: %s',
-                        get_class($obj),
-                        $fieldName,
-                        $ex->getMessage()
-                    ));
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Failed to generate a value for %s::%s: %s',
+                            get_class($obj),
+                            $fieldName,
+                            $ex->getMessage()
+                        )
+                    );
                 }
 
-                $obj->{$fieldName} = $value;
+                $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
             }
         }
+    }
+
+    private function prepareValue(Model $obj, $fieldName, $value)
+    {
+        $field = $obj->meta->getField($fieldName);
+
+        if ($field instanceof CharField && $field->maxLength && is_string($value)) :
+            $value = substr($value, 0, $field->maxLength);
+        endif;
+
+        return $value;
     }
 
     private function callMethods($obj, $insertedEntities)
