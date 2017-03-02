@@ -169,8 +169,6 @@ class EntityPopulator
 
         $obj->save();
 
-//        $pk = $obj->meta->primaryKey->name;
-
         return $obj;
 
     }
