@@ -118,8 +118,40 @@ class EntityPopulator
             }
         }
 
-        // take of retionships
+        // take of relationships
         foreach ($this->class->meta->localFields as $name => $field) :
+            if ($field->isRelation === false):
+                continue;
+            endif;
+
+            $fieldName = $field->name;
+            $relatedClass = $field->relation->getToModel();
+            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
+            $index = 0;
+            $unique = $field->isUnique();
+            $optional = $field->null;
+
+            $formatters[$fieldName] = function ($inserted) use ($relatedClass, &$index, $unique, $optional) {
+                if (isset($inserted[$relatedClass])) :
+                    if ($unique):
+                        $related = null;
+                        if (isset($inserted[$relatedClass][$index]) || !$optional) :
+                            $related = $inserted[$relatedClass][$index];
+                        endif;
+                        ++$index;
+
+                        return $related;
+
+                    endif;
+
+                    return $inserted[$relatedClass][mt_rand(0, count($inserted[$relatedClass]) - 1)];
+                endif;
+            };
+
+        endforeach;
+
+        // take of relationships
+        foreach ($this->class->meta->localManyToMany as $name => $field) :
             if ($field->isRelation === false):
                 continue;
             endif;
@@ -165,7 +197,6 @@ class EntityPopulator
     {
 
         $class = $this->getClass();
-
         /** @var $obj Model */
         $obj = new $class();
 
@@ -173,7 +204,7 @@ class EntityPopulator
         $this->callMethods($obj, $insertedEntities);
 
         $obj->save();
-
+        $this->saveM2M($obj, $insertedEntities);
         return $obj;
 
     }
@@ -200,8 +231,36 @@ class EntityPopulator
                         )
                     );
                 }
-
                 $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
+            }
+        }
+    }
+
+    /**
+     * @param Model $obj
+     * @param $insertedEntities
+     * @author: Eddilbert Macharia (http://eddmash.com)<edd.cowan@gmail.com>
+     */
+    private function saveM2M(Model $obj, $insertedEntities)
+    {
+        foreach ($this->columnFormatters as $fieldName => $format) {
+            if (null !== $format) {
+                // Add some extended debugging information to any errors thrown by the formatter
+                try {
+                    $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
+                } catch (\InvalidArgumentException $ex) {
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Failed to generate a value for %s::%s: %s',
+                            get_class($obj),
+                            $fieldName,
+                            $ex->getMessage()
+                        )
+                    );
+                }
+                if ($obj->meta->getField($fieldName)->manyToMany) :
+                    $obj->{$fieldName}->set($value);
+                endif;
             }
         }
     }

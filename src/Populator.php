@@ -51,11 +51,11 @@ class Populator
         if ($entity instanceof Model):
 
             /** @var $field RelatedField */
-            foreach ($entity->meta->localFields as $name => $field) :
+            foreach ($entity->meta->getFields() as $name => $field) :
                 if ($field->isRelation):
                     $model = $field->relation->getToModel();
                     $relatedModel = (is_string($model)) ? $model : $model->meta->modelName;
-                    // ignore recursive for now
+                    // todo ignore recursive for now
                     if ($relatedModel === $entity->meta->modelName):
                         continue;
                     endif;
@@ -99,7 +99,6 @@ class Populator
         while ($total > $prevCount):
 
             foreach ($this->quantities as $class => $number) :
-
                 $generateId = $this->generateId[$class];
 
                 // check if it depends on something.if its resolved remove it.
@@ -109,7 +108,6 @@ class Populator
                     $progressBar = new ProgressBar($output, $number);
                     for ($i = 0; $i < $number; ++$i) {
                         $entity = $this->entities[$class];
-
                         $insertedEntities[$class][] = $entity->execute($insertedEntities, $generateId);
                         $progressBar->advance();
                     }
