@@ -2,6 +2,7 @@
 
 namespace Eddmash\PowerOrmFaker;
 
+use Eddmash\PowerOrm\Exception\ValueError;
 use Eddmash\PowerOrm\Model\Field\RelatedField;
 use Eddmash\PowerOrm\Model\Model;
 use Faker\Generator;
@@ -47,12 +48,13 @@ class Populator
         $customColumnFormatters = array(),
         $customModifiers = array(),
         $generateId = false
-    ) {
+    )
+    {
         if ($entity instanceof Model):
-
+            $this->relationMap[$entity->meta->modelName] = [];
             /** @var $field RelatedField */
             foreach ($entity->meta->getFields() as $name => $field) :
-                if ($field->isRelation):
+                if ($field->isRelation && $field->concrete):
                     $model = $field->relation->getToModel();
                     $relatedModel = (is_string($model)) ? $model : $model->meta->modelName;
                     // todo ignore recursive for now
@@ -93,36 +95,73 @@ class Populator
     {
         $insertedEntities = array();
 
-        /** @var $entity EntityPopulator */
-        $prevCount = 0;
-        $total = count($this->quantities);
-        while ($total > $prevCount):
+        /* @var $entity EntityPopulator */
 
-            foreach ($this->quantities as $class => $number) :
-                $generateId = $this->generateId[$class];
+        $sortedClasses = $this->topologicalSort($this->relationMap);
 
-                // check if it depends on something.if its resolved remove it.
-                if ($this->isResolved($class, $insertedEntities)):
+        foreach ($sortedClasses as $class) :
+            $generateId = $this->generateId[$class];
+            $number = $this->quantities[$class];
 
-                    $output->writeln(sprintf('Populating %s :', $class));
-                    $progressBar = new ProgressBar($output, $number);
-                    for ($i = 0; $i < $number; ++$i) {
-                        $entity = $this->entities[$class];
-                        $insertedEntities[$class][] = $entity->execute($insertedEntities, $generateId);
-                        $progressBar->advance();
-                    }
-                    $progressBar->finish();
-                    $output->writeln(' ');
+            $output->writeln(sprintf('Populating %s :', $class));
+            $progressBar = new ProgressBar($output, $number);
+            for ($i = 0; $i < $number; ++$i) {
+                $entity = $this->entities[$class];
+                $insertedEntities[$class][] = $entity->execute($insertedEntities, $generateId);
+                $progressBar->advance();
+            }
+            $progressBar->finish();
+            $output->writeln(' ');
 
-                    unset($this->quantities[$class]);
+        endforeach;
+
+        return $insertedEntities;
+    }
+
+    /**
+     * sorts the operations in topological order using kahns algorithim.
+     *
+     * @param $operations
+     * @param $dependency
+     *
+     * @return array
+     *
+     * @since 1.1.0
+     *
+     * @author Eddilbert Macharia (http://eddmash.com) <edd.cowan@gmail.com>
+     */
+    private function topologicalSort($dependency)
+    {
+        $sorted = [];
+        $deps = $dependency;
+        while ($deps):
+
+            $noDeps = [];
+
+            foreach ($deps as $index => $dep) :
+                if (!$dep):
+                    $noDeps[] = $index;
                 endif;
-
             endforeach;
 
-            ++$prevCount;
+            if (!$noDeps):
+                throw new ValueError('Cyclic dependency on topological sort');
+            endif;
+
+            $sorted = array_merge($sorted, $noDeps);
+
+            $newDeps = [];
+            foreach ($deps as $index => $dep) :
+                if (!in_array($index, $noDeps)):
+                    $parents = array_diff($dep, $noDeps);
+                    $newDeps[$index] = $parents;
+                endif;
+            endforeach;
+            $deps = $newDeps;
+
         endwhile;
 
-        return [$insertedEntities, $this->relationMap];
+        return $sorted;
     }
 
     public function isResolved($class, $insertedEntities)
@@ -138,7 +177,7 @@ class Populator
                     $key = array_search($depends, $this->relationMap[$class]);
 
                     $allResolved = $allResolved && isset($insertedEntities[$depends]);
-                    unset($this->relationMap[$class][$key]);
+//                    unset($this->relationMap[$class][$key]);
                 endif;
             endforeach;
 

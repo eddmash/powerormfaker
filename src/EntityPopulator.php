@@ -176,7 +176,7 @@ class EntityPopulator
 
                     endif;
 
-                    return $inserted[$relatedClass][mt_rand(0, count($inserted[$relatedClass]) - 1)];
+                    return array_slice($inserted[$relatedClass], 0, mt_rand(0, count($inserted[$relatedClass]) - 1));
                 endif;
             };
 
@@ -205,6 +205,7 @@ class EntityPopulator
 
         $obj->save();
         $this->saveM2M($obj, $insertedEntities);
+
         return $obj;
 
     }
@@ -231,6 +232,9 @@ class EntityPopulator
                         )
                     );
                 }
+                if($obj->meta->getField($fieldName)->manyToMany):
+                    continue;
+                endif;
                 $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
             }
         }
@@ -259,6 +263,7 @@ class EntityPopulator
                     );
                 }
                 if ($obj->meta->getField($fieldName)->manyToMany) :
+
                     $obj->{$fieldName}->set($value);
                 endif;
             }
