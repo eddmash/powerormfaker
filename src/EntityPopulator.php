@@ -105,7 +105,7 @@ class EntityPopulator
             if ($field instanceof AutoField || $field->isRelation) {
                 continue;
             }
-            $fieldName = $field->name;
+            $fieldName = $field->getName();
             $size = ($field->hasProperty('maxLength') === true) ? $field->maxLength : null;
 
             if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
@@ -124,7 +124,7 @@ class EntityPopulator
                 continue;
             endif;
 
-            $fieldName = $field->name;
+            $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
             $index = 0;
@@ -156,7 +156,7 @@ class EntityPopulator
                 continue;
             endif;
 
-            $fieldName = $field->name;
+            $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
             $index = 0;
