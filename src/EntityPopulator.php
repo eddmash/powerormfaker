@@ -42,7 +42,7 @@ class EntityPopulator
      */
     public function getClass()
     {
-        return $this->class->meta->modelName;
+        return $this->class->meta->getNamespacedModelName();
     }
 
     /**
@@ -126,7 +126,7 @@ class EntityPopulator
 
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
-            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
+            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->null;
@@ -158,7 +158,7 @@ class EntityPopulator
 
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
-            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->modelName;
+            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->null;
@@ -202,7 +202,6 @@ class EntityPopulator
 
         $this->fillColumns($obj, $insertedEntities);
         $this->callMethods($obj, $insertedEntities);
-
         $obj->save();
         $this->saveM2M($obj, $insertedEntities);
 

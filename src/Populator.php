@@ -51,17 +51,17 @@ class Populator
     )
     {
         if ($entity instanceof Model):
-            $this->relationMap[$entity->meta->modelName] = [];
+            $this->relationMap[$entity->meta->getNamespacedModelName()] = [];
             /** @var $field RelatedField */
             foreach ($entity->meta->getFields() as $name => $field) :
                 if ($field->isRelation && $field->concrete):
                     $model = $field->relation->getToModel();
-                    $relatedModel = (is_string($model)) ? $model : $model->meta->modelName;
+                    $relatedModel = (is_string($model)) ? $model : $model->meta->getNamespacedModelName();
                     // todo ignore recursive for now
-                    if ($relatedModel === $entity->meta->modelName):
+                    if ($relatedModel === $entity->meta->getNamespacedModelName()):
                         continue;
                     endif;
-                    $this->relationMap[$entity->meta->modelName][] = $relatedModel;
+                    $this->relationMap[$entity->meta->getNamespacedModelName()][] = $relatedModel;
                 endif;
             endforeach;
 
