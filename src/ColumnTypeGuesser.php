@@ -2,6 +2,7 @@
 
 namespace Eddmash\PowerOrmFaker;
 
+use Eddmash\PowerOrm\BaseOrm;
 use Eddmash\PowerOrm\Model\Model;
 use Faker\Generator;
 
@@ -25,7 +26,7 @@ class ColumnTypeGuesser
     public function guessFormat($fieldName, Model $class)
     {
         $generator = $this->generator;
-        $type = $class->meta->getField($fieldName)->dbType(null);
+        $type = $class->meta->getField($fieldName)->dbType(BaseOrm::getDbConnection());
         switch ($type) {
             case 'boolean':
                 return function () use ($generator) {
