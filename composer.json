@@ -19,7 +19,7 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "composer/installers": "~1.0",
+    "eddmash/powerorm": "1.1.0.x-dev",
     "fzaninotto/faker": "*"
   },
   "require-dev": {
@@ -29,12 +29,11 @@
       "Eddmash\\PowerOrmFaker\\": "src/"
     }
   },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.0.x-dev"
-    }
+  "suggest": {
+    "eddmash/powerorm": "A very simple but effective php orm"
   },
   "support": {
     "issues": "https://github.com/eddmash/powerormorm/issues"
   }
+
 }
