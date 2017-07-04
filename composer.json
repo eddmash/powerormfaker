@@ -19,7 +19,7 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "eddmash/powerorm": "1.1.*",
+    "eddmash/powerorm": "^1.1.0",
     "fzaninotto/faker": "*"
   },
   "require-dev": {
@@ -27,6 +27,11 @@
   "autoload": {
     "psr-4": {
       "Eddmash\\PowerOrmFaker\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.1.x-dev"
     }
   },
   "suggest": {
