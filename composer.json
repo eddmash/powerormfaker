@@ -19,7 +19,7 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "eddmash/powerorm": "*",
+    "eddmash/powerorm": "1.1.*",
     "fzaninotto/faker": "*"
   },
   "require-dev": {
