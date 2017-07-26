@@ -262,7 +262,6 @@ class EntityPopulator
                     );
                 }
                 if ($obj->meta->getField($fieldName)->manyToMany) :
-
                     $obj->{$fieldName}->set($value);
                 endif;
             }
