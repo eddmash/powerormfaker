@@ -129,7 +129,7 @@ class EntityPopulator
             $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
-            $optional = $field->null;
+            $optional = $field->isNull();
 
             $formatters[$fieldName] = function ($inserted) use ($relatedClass, &$index, $unique, $optional) {
                 if (isset($inserted[$relatedClass])) :
@@ -161,7 +161,7 @@ class EntityPopulator
             $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
-            $optional = $field->null;
+            $optional = $field->isNull();
 
             $formatters[$fieldName] = function ($inserted) use ($relatedClass, &$index, $unique, $optional) {
                 if (isset($inserted[$relatedClass])) :
