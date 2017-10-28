@@ -32,10 +32,10 @@ class Populator
     /**
      * Add an order for the generation of $number records for $entity.
      *
-     * @param mixed      $entity                 a Model instance, or a \Eddmash\PowerOrmFaker\EntityPopulator instance
-     * @param int        $number                 The number of entities to populate
-     * @param array      $customColumnFormatters
-     * @param array      $customModifiers
+     * @param mixed $entity a Model instance, or a \Eddmash\PowerOrmFaker\EntityPopulator instance
+     * @param int $number The number of entities to populate
+     * @param array $customColumnFormatters
+     * @param array $customModifiers
      * @param bool|false $generateId
      *
      * @since 1.1.0
@@ -67,16 +67,24 @@ class Populator
 
         endif;
 
+        $userFormatters = array();
+        if ($entity instanceof FakeableInterface):
+            $userFormatters = $entity->registerFormatter($this->generator);
+        endif;
+
         if (!$entity instanceof EntityPopulator):
             $entity = new EntityPopulator($entity);
         endif;
+        $entity->setUserFormatters($userFormatters);
 
-        $entity->setColumnFormatters($entity->guessColumnFormatters($this->generator));
+        $entity->setGenerator($this->generator);
+        $entity->setColumnFormatters($entity->guessColumnFormatters());
         if ($customColumnFormatters) :
             $entity->mergeColumnFormattersWith($customColumnFormatters);
         endif;
 
         $entity->mergeModifiersWith($customModifiers);
+
         $this->generateId[$entity->getClass()] = $generateId;
 
         $class = $entity->getClass();

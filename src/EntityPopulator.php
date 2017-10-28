@@ -14,10 +14,12 @@ use Faker\Guesser\Name;
  */
 class EntityPopulator
 {
+    public $generator;
+    public $userFormatters;
     /**
      * @var Model
      */
-    protected $class;
+    protected $model;
     /**
      * @var array
      */
@@ -34,7 +36,7 @@ class EntityPopulator
      */
     public function __construct(Model $class)
     {
-        $this->class = $class;
+        $this->model = $class;
     }
 
     /**
@@ -42,7 +44,7 @@ class EntityPopulator
      */
     public function getClass()
     {
-        return $this->class->meta->getNamespacedModelName();
+        return $this->model->meta->getNamespacedModelName();
     }
 
     /**
@@ -64,6 +66,11 @@ class EntityPopulator
     public function mergeColumnFormattersWith($columnFormatters)
     {
         $this->columnFormatters = array_merge($this->columnFormatters, $columnFormatters);
+    }
+
+    public function setGenerator(Generator $generator)
+    {
+        $this->generator = $generator;
     }
 
     /**
@@ -95,31 +102,38 @@ class EntityPopulator
      *
      * @return array
      */
-    public function guessColumnFormatters(Generator $generator)
+    public function guessColumnFormatters()
     {
+        $userFormatters = $this->getUserFormatters();
+
         $formatters = array();
-        $nameGuesser = new Name($generator);
-        $columnTypeGuesser = new ColumnTypeGuesser($generator);
+        $nameGuesser = new Name($this->generator);
+        $columnTypeGuesser = new ColumnTypeGuesser($this->generator);
         /** @var $field Field */
-        foreach ($this->class->meta->localFields as $name => $field) {
+        foreach ($this->model->meta->localFields as $name => $field) {
             if ($field instanceof AutoField || $field->isRelation) {
                 continue;
             }
             $fieldName = $field->getName();
+
+            if (array_key_exists($fieldName, $userFormatters)):
+                $formatters[$fieldName] = $userFormatters[$fieldName];
+                continue;
+            endif;
             $size = ($field->hasProperty('maxLength') === true) ? $field->maxLength : null;
 
             if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
                 $formatters[$fieldName] = $formatter;
                 continue;
             }
-            if ($formatter = $columnTypeGuesser->guessFormat($fieldName, $this->class)) {
+            if ($formatter = $columnTypeGuesser->guessFormat($fieldName, $this->model)) {
                 $formatters[$fieldName] = $formatter;
                 continue;
             }
         }
 
         // take of relationships
-        foreach ($this->class->meta->localFields as $name => $field) :
+        foreach ($this->model->meta->localFields as $name => $field) :
             if ($field->isRelation === false):
                 continue;
             endif;
@@ -131,7 +145,10 @@ class EntityPopulator
             $unique = $field->isUnique();
             $optional = $field->isNull();
 
-            $formatters[$fieldName] = function ($inserted) use ($relatedClass, &$index, $unique, $optional) {
+            $formatters[$fieldName] = function ($generator, $object, $inserted) use (
+                $relatedClass, &$index, $unique,
+                $optional
+            ) {
                 if (isset($inserted[$relatedClass])) :
                     if ($unique):
                         $related = null;
@@ -151,7 +168,7 @@ class EntityPopulator
         endforeach;
 
         // take of relationships
-        foreach ($this->class->meta->localManyToMany as $name => $field) :
+        foreach ($this->model->meta->localManyToMany as $name => $field) :
             if ($field->isRelation === false):
                 continue;
             endif;
@@ -163,7 +180,10 @@ class EntityPopulator
             $unique = $field->isUnique();
             $optional = $field->isNull();
 
-            $formatters[$fieldName] = function ($inserted) use ($relatedClass, &$index, $unique, $optional) {
+            $formatters[$fieldName] = function ($generator, $object, $inserted) use (
+                $relatedClass, &$index, $unique,
+                $optional
+            ) {
                 if (isset($inserted[$relatedClass])) :
                     if ($unique):
                         $related = null;
@@ -189,7 +209,7 @@ class EntityPopulator
      * Insert one new record using the Entity class.
      *
      * @param array $insertedEntities a list of all inserted records ids per model
-     * @param bool  $generateId
+     * @param bool $generateId
      *
      * @return Model
      */
@@ -220,7 +240,7 @@ class EntityPopulator
             if (null !== $format) {
                 // Add some extended debugging information to any errors thrown by the formatter
                 try {
-                    $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
+                    $value = is_callable($format) ? $format($this->generator, $obj, $insertedEntities) : $format;
                 } catch (\InvalidArgumentException $ex) {
                     throw new \InvalidArgumentException(
                         sprintf(
@@ -231,12 +251,13 @@ class EntityPopulator
                         )
                     );
                 }
-                if($obj->meta->getField($fieldName)->manyToMany):
+                if ($obj->meta->getField($fieldName)->manyToMany):
                     continue;
                 endif;
                 $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
             }
         }
+
     }
 
     /**
@@ -250,7 +271,7 @@ class EntityPopulator
             if (null !== $format) {
                 // Add some extended debugging information to any errors thrown by the formatter
                 try {
-                    $value = is_callable($format) ? $format($insertedEntities, $obj) : $format;
+                    $value = is_callable($format) ? $format($this->generator, $obj,$insertedEntities) : $format;
                 } catch (\InvalidArgumentException $ex) {
                     throw new \InvalidArgumentException(
                         sprintf(
@@ -285,5 +306,20 @@ class EntityPopulator
             $modifier($obj, $insertedEntities);
         }
     }
+
+    private function getUserFormatters()
+    {
+        return $this->userFormatters;
+    }
+
+    /**
+     * @param mixed $userFormatters
+     */
+    public function setUserFormatters($userFormatters)
+    {
+        $this->userFormatters = $userFormatters;
+    }
+
+
 
 }
