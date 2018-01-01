@@ -9,18 +9,18 @@
 * file that was distributed with this source code.
 */
 
-namespace Eddmash\PowerOrmFaker;
+namespace Eddmash\PowerOrmFaker\Commands;
 
 use Eddmash\PowerOrm\BaseOrm;
-use Eddmash\PowerOrm\Console\Command\BaseCommand;
 use Eddmash\PowerOrm\Exception\CommandError;
 use Eddmash\PowerOrm\Model\Model;
+use Eddmash\PowerOrmFaker\Populator;
 use Faker\Factory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Generatedata extends BaseCommand
+class Generatedata extends Command
 {
     public $help = 'Generate sample data for your models.';
 
@@ -74,7 +74,7 @@ class Generatedata extends BaseCommand
         /** @var $model Model */
         foreach ($models as $name => $model) :
 
-            if ($model->meta->autoCreated || array_key_exists(strtolower($name), $ignore)):
+            if ($model->getMeta()->autoCreated || array_key_exists(strtolower($name), $ignore)):
                 continue;
             endif;
 
@@ -139,11 +139,10 @@ class Generatedata extends BaseCommand
     {
         if (!class_exists('Eddmash\PowerOrmFaker\Populator')) :
             throw new CommandError(
-                "This comand depends on 'eddmash\\powerormfaker' which is not installed, see how " .
+                "This comand depends on 'eddmash\\powerormfaker' which is not installed, see how ".
                 'to install https://github.com/eddmash/powerormfaker'
             );
         endif;
         parent::check($input, $output, $tags, $showErrorCount, $failLevel);
     }
-
 }

@@ -10,9 +10,9 @@ use Faker\Generator;
 use Faker\Guesser\Name;
 
 /**
- * Service class for populating a table through a PowerOrm Entity class.
+ * Service class for populating a table through a PowerOrm Model class.
  */
-class EntityPopulator
+class ModelPopulator
 {
     public $generator;
     public $userFormatters;
@@ -44,7 +44,7 @@ class EntityPopulator
      */
     public function getClass()
     {
-        return $this->model->meta->getNamespacedModelName();
+        return $this->model->getMeta()->getNamespacedModelName();
     }
 
     /**
@@ -110,7 +110,7 @@ class EntityPopulator
         $nameGuesser = new Name($this->generator);
         $columnTypeGuesser = new ColumnTypeGuesser($this->generator);
         /** @var $field Field */
-        foreach ($this->model->meta->localFields as $name => $field) {
+        foreach ($this->model->getMeta()->localFields as $name => $field) {
             if ($field instanceof AutoField || $field->isRelation) {
                 continue;
             }
@@ -120,7 +120,7 @@ class EntityPopulator
                 $formatters[$fieldName] = $userFormatters[$fieldName];
                 continue;
             endif;
-            $size = ($field->hasProperty('maxLength') === true) ? $field->maxLength : null;
+            $size = (true === $field->hasProperty('maxLength')) ? $field->maxLength : null;
 
             if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
                 $formatters[$fieldName] = $formatter;
@@ -133,14 +133,14 @@ class EntityPopulator
         }
 
         // take of relationships
-        foreach ($this->model->meta->localFields as $name => $field) :
-            if ($field->isRelation === false):
+        foreach ($this->model->getMeta()->localFields as $name => $field) :
+            if (false === $field->isRelation):
                 continue;
             endif;
 
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
-            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
+            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->getMeta()->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->isNull();
@@ -168,14 +168,14 @@ class EntityPopulator
         endforeach;
 
         // take of relationships
-        foreach ($this->model->meta->localManyToMany as $name => $field) :
-            if ($field->isRelation === false):
+        foreach ($this->model->getMeta()->localManyToMany as $name => $field) :
+            if (false === $field->isRelation):
                 continue;
             endif;
 
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
-            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->meta->getNamespacedModelName();
+            $relatedClass = (is_string($relatedClass)) ? $relatedClass : $relatedClass->getMeta()->getNamespacedModelName();
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->isNull();
@@ -209,13 +209,12 @@ class EntityPopulator
      * Insert one new record using the Entity class.
      *
      * @param array $insertedEntities a list of all inserted records ids per model
-     * @param bool $generateId
+     * @param bool  $generateId
      *
      * @return Model
      */
     public function execute($insertedEntities, $generateId = false)
     {
-
         $class = $this->getClass();
         /** @var $obj Model */
         $obj = new $class();
@@ -226,7 +225,6 @@ class EntityPopulator
         $this->saveM2M($obj, $insertedEntities);
 
         return $obj;
-
     }
 
     /**
@@ -251,13 +249,12 @@ class EntityPopulator
                         )
                     );
                 }
-                if ($obj->meta->getField($fieldName)->manyToMany):
+                if ($obj->getMeta()->getField($fieldName)->manyToMany):
                     continue;
                 endif;
                 $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
             }
         }
-
     }
 
     /**
@@ -271,7 +268,7 @@ class EntityPopulator
             if (null !== $format) {
                 // Add some extended debugging information to any errors thrown by the formatter
                 try {
-                    $value = is_callable($format) ? $format($this->generator, $obj,$insertedEntities) : $format;
+                    $value = is_callable($format) ? $format($this->generator, $obj, $insertedEntities) : $format;
                 } catch (\InvalidArgumentException $ex) {
                     throw new \InvalidArgumentException(
                         sprintf(
@@ -282,7 +279,7 @@ class EntityPopulator
                         )
                     );
                 }
-                if ($obj->meta->getField($fieldName)->manyToMany) :
+                if ($obj->getMeta()->getField($fieldName)->manyToMany) :
                     $obj->{$fieldName}->set($value);
                 endif;
             }
@@ -291,7 +288,7 @@ class EntityPopulator
 
     private function prepareValue(Model $obj, $fieldName, $value)
     {
-        $field = $obj->meta->getField($fieldName);
+        $field = $obj->getMeta()->getField($fieldName);
 
         if ($field instanceof CharField && $field->maxLength && is_string($value)) :
             $value = substr($value, 0, $field->maxLength);
@@ -319,7 +316,4 @@ class EntityPopulator
     {
         $this->userFormatters = $userFormatters;
     }
-
-
-
 }

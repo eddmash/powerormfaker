@@ -26,7 +26,7 @@ class ColumnTypeGuesser
     public function guessFormat($fieldName, Model $class)
     {
         $generator = $this->generator;
-        $field = $class->meta->getField($fieldName);
+        $field = $class->getMeta()->getField($fieldName);
         $type = $field->dbType(BaseOrm::getDbConnection());
         switch ($type) {
             case 'boolean':
@@ -34,10 +34,11 @@ class ColumnTypeGuesser
                     return $generator->boolean;
                 };
             case 'decimal':
-                $size = property_exists($field, "decimalPlaces") ? $field->decimalPlaces : 2;
+                $size = property_exists($field, 'decimalPlaces') ?
+                    $field->decimalPlaces : 2;
 
                 return function () use ($generator, $size) {
-                    return $generator->randomNumber($size + 2) / 100;
+                    return $generator->randomFloat($size);
                 };
             case 'smallint':
                 return function () {

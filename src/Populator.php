@@ -32,10 +32,10 @@ class Populator
     /**
      * Add an order for the generation of $number records for $entity.
      *
-     * @param mixed $entity a Model instance, or a \Eddmash\PowerOrmFaker\EntityPopulator instance
-     * @param int $number The number of entities to populate
-     * @param array $customColumnFormatters
-     * @param array $customModifiers
+     * @param mixed      $entity                 a Model instance, or a \Eddmash\PowerOrmFaker\EntityPopulator instance
+     * @param int        $number                 The number of entities to populate
+     * @param array      $customColumnFormatters
+     * @param array      $customModifiers
      * @param bool|false $generateId
      *
      * @since 1.1.0
@@ -51,17 +51,17 @@ class Populator
     )
     {
         if ($entity instanceof Model):
-            $this->relationMap[$entity->meta->getNamespacedModelName()] = [];
+            $this->relationMap[$entity->getMeta()->getNamespacedModelName()] = [];
             /** @var $field RelatedField */
-            foreach ($entity->meta->getFields() as $name => $field) :
+            foreach ($entity->getMeta()->getFields() as $name => $field) :
                 if ($field->isRelation && $field->concrete):
                     $model = $field->relation->getToModel();
-                    $relatedModel = (is_string($model)) ? $model : $model->meta->getNamespacedModelName();
+                    $relatedModel = (is_string($model)) ? $model : $model->getMeta()->getNamespacedModelName();
                     // todo ignore recursive for now
-                    if ($relatedModel === $entity->meta->getNamespacedModelName()):
+                    if ($relatedModel === $entity->getMeta()->getNamespacedModelName()):
                         continue;
                     endif;
-                    $this->relationMap[$entity->meta->getNamespacedModelName()][] = $relatedModel;
+                    $this->relationMap[$entity->getMeta()->getNamespacedModelName()][] = $relatedModel;
                 endif;
             endforeach;
 
@@ -72,8 +72,8 @@ class Populator
             $userFormatters = $entity->registerFormatter($this->generator);
         endif;
 
-        if (!$entity instanceof EntityPopulator):
-            $entity = new EntityPopulator($entity);
+        if (!$entity instanceof ModelPopulator):
+            $entity = new ModelPopulator($entity);
         endif;
         $entity->setUserFormatters($userFormatters);
 
@@ -103,7 +103,7 @@ class Populator
     {
         $insertedEntities = array();
 
-        /* @var $entity EntityPopulator */
+        /* @var $entity ModelPopulator */
 
         $sortedClasses = $this->topologicalSort($this->relationMap);
 

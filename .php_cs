@@ -1,8 +1,13 @@
 <?php
 
-$finder = Symfony\CS\Finder\DefaultFinder::create()
+$finder = PhpCsFixer\Finder::create()
     ->in(__DIR__.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR);
 
-return Symfony\CS\Config\Config::create()
-    ->fixers(array('-braces', 'empty_return', 'whitespacy_lines'))
-    ->finder($finder);
+return PhpCsFixer\Config::create()
+    ->setRules(array(
+        '@Symfony' => true,
+        'braces'=>false,
+        'blank_line_before_statement'=>false
+        )
+    )
+    ->setFinder($finder);

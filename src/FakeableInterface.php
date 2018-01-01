@@ -11,11 +11,9 @@
 
 namespace Eddmash\PowerOrmFaker;
 
-
 use Faker\Generator;
 
 interface FakeableInterface
 {
-
     public function registerFormatter(Generator $generator);
 }
