@@ -29,7 +29,7 @@ class ModelPopulator
      * @var array
      */
     protected $modifiers = [];
-    
+
     /**
      * Class constructor.
      *
@@ -39,7 +39,7 @@ class ModelPopulator
     {
         $this->model = $class;
     }
-    
+
     /**
      * @return string
      */
@@ -47,7 +47,7 @@ class ModelPopulator
     {
         return $this->model->getMeta()->getNSModelName();
     }
-    
+
     /**
      * @param $columnFormatters
      */
@@ -55,7 +55,7 @@ class ModelPopulator
     {
         $this->columnFormatters = $columnFormatters;
     }
-    
+
     /**
      * @return array
      */
@@ -63,17 +63,17 @@ class ModelPopulator
     {
         return $this->columnFormatters;
     }
-    
+
     public function mergeColumnFormattersWith($columnFormatters)
     {
         $this->columnFormatters = array_merge($this->columnFormatters, $columnFormatters);
     }
-    
+
     public function setGenerator(Generator $generator)
     {
         $this->generator = $generator;
     }
-    
+
     /**
      * @param array $modifiers
      */
@@ -81,7 +81,7 @@ class ModelPopulator
     {
         $this->modifiers = $modifiers;
     }
-    
+
     /**
      * @return array
      */
@@ -89,7 +89,7 @@ class ModelPopulator
     {
         return $this->modifiers;
     }
-    
+
     /**
      * @param array $modifiers
      */
@@ -97,7 +97,7 @@ class ModelPopulator
     {
         $this->modifiers = array_merge($this->modifiers, $modifiers);
     }
-    
+
     /**
      * @param Generator $generator
      *
@@ -106,7 +106,7 @@ class ModelPopulator
     public function guessColumnFormatters()
     {
         $userFormatters = $this->getUserFormatters();
-        
+
         $formatters = [];
         $nameGuesser = new Name($this->generator);
         $columnTypeGuesser = new ColumnTypeGuesser($this->generator);
@@ -116,14 +116,14 @@ class ModelPopulator
                 continue;
             }
             $fieldName = $field->getName();
-            
-            if (array_key_exists($fieldName, $userFormatters)):
+
+            if (array_key_exists($fieldName, $userFormatters)) {
                 $formatters[$fieldName] = $userFormatters[$fieldName];
                 continue;
-            endif;
+            }
             $size = (true === $field->hasProperty('maxLength')) ?
                 $field->maxLength : null;
-            
+
             if ($formatter = $nameGuesser->guessFormat($fieldName, $size)) {
                 $formatters[$fieldName] = $formatter;
                 continue;
@@ -137,12 +137,12 @@ class ModelPopulator
                 continue;
             }
         }
-        
+
         // take care of forward relationships non m2m
-        foreach ($this->model->getMeta()->localFields as $name => $field) :
-            if (false === $field->isRelation):
+        foreach ($this->model->getMeta()->localFields as $name => $field) {
+            if (false === $field->isRelation) {
                 continue;
-            endif;
+            }
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass :
@@ -150,38 +150,36 @@ class ModelPopulator
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->isNull();
-            
+
             $formatters[$fieldName] = function ($generator, $object, $inserted) use (
                 $relatedClass,
                 &$index,
                 $unique,
                 $optional
             ) {
-                if (isset($inserted[$relatedClass])) :
-                    if ($unique):
+                if (isset($inserted[$relatedClass])) {
+                    if ($unique) {
                         $related = null;
-                        if (isset($inserted[$relatedClass][$index]) || !$optional) :
+                        if (isset($inserted[$relatedClass][$index]) || !$optional) {
                             $related = $inserted[$relatedClass][$index];
-                        endif;
+                        }
                         ++$index;
-                        
+
                         return $related;
-                    
-                    endif;
+                    }
                     $val = mt_rand(0, count($inserted[$relatedClass]) - 1);
-                    
+
                     return $inserted[$relatedClass][$val];
-                endif;
+                }
             };
-        
-        endforeach;
-        
+        }
+
         // take of care m2m relationships
-        foreach ($this->model->getMeta()->localManyToMany as $name => $field) :
-            if (false === $field->isRelation):
+        foreach ($this->model->getMeta()->localManyToMany as $name => $field) {
+            if (false === $field->isRelation) {
                 continue;
-            endif;
-            
+            }
+
             $fieldName = $field->getName();
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass :
@@ -189,38 +187,36 @@ class ModelPopulator
             $index = 0;
             $unique = $field->isUnique();
             $optional = $field->isNull();
-            
+
             $formatters[$fieldName] = function ($generator, $object, $inserted) use (
                 $relatedClass,
                 &$index,
                 $unique,
                 $optional
             ) {
-                if (isset($inserted[$relatedClass])) :
-                    if ($unique):
+                if (isset($inserted[$relatedClass])) {
+                    if ($unique) {
                         $related = null;
-                        if (isset($inserted[$relatedClass][$index]) || !$optional) :
+                        if (isset($inserted[$relatedClass][$index]) || !$optional) {
                             $related = $inserted[$relatedClass][$index];
-                        endif;
+                        }
                         ++$index;
-                        
+
                         return $related;
-                    
-                    endif;
-                    
+                    }
+
                     return array_slice(
                         $inserted[$relatedClass],
                         0,
                         mt_rand(0, count($inserted[$relatedClass]) - 1)
                     );
-                endif;
+                }
             };
-        
-        endforeach;
-        
+        }
+
         return $formatters;
     }
-    
+
     /**
      * Insert one new record using the Entity class.
      *
@@ -228,6 +224,7 @@ class ModelPopulator
      * @param bool  $generateId
      *
      * @return Model
+     *
      * @throws \Eddmash\PowerOrm\Exception\ValueError
      */
     public function execute($insertedEntities, $generateId = false)
@@ -235,16 +232,16 @@ class ModelPopulator
         $class = $this->getClass();
         /** @var $obj Model */
         $obj = new $class();
-        
+
         $this->fillColumns($obj, $insertedEntities);
         $this->callMethods($obj, $insertedEntities);
-        
+
         $obj->save();
         $this->saveM2M($obj, $insertedEntities);
-        
+
         return $obj;
     }
-    
+
     /**
      * @param Model $obj
      * @param       $insertedEntities
@@ -253,7 +250,6 @@ class ModelPopulator
     private function fillColumns(Model $obj, $insertedEntities)
     {
         foreach ($this->columnFormatters as $fieldName => $format) {
-            
             if (null !== $format) {
                 // Add some extended debugging information to any errors
                 // thrown by the formatter
@@ -271,19 +267,18 @@ class ModelPopulator
                         )
                     );
                 }
-                
-                
+
                 try {
-                    if ($obj->getMeta()->getField($fieldName)->manyToMany):
+                    if ($obj->getMeta()->getField($fieldName)->manyToMany) {
                         continue;
-                    endif;
+                    }
                     $obj->{$fieldName} = $this->prepareValue($obj, $fieldName, $value);
                 } catch (FieldDoesNotExist $e) {
                 }
             }
         }
     }
-    
+
     /**
      * @param Model $obj
      * @param       $insertedEntities
@@ -306,36 +301,36 @@ class ModelPopulator
                         )
                     );
                 }
-                if ($obj->getMeta()->getField($fieldName)->manyToMany) :
+                if ($obj->getMeta()->getField($fieldName)->manyToMany) {
                     $obj->{$fieldName}->set($value);
-                endif;
+                }
             }
         }
     }
-    
+
     private function prepareValue(Model $obj, $fieldName, $value)
     {
         $field = $obj->getMeta()->getField($fieldName);
-        
-        if ($field instanceof CharField && $field->maxLength && is_string($value)) :
+
+        if ($field instanceof CharField && $field->maxLength && is_string($value)) {
             $value = substr($value, 0, $field->maxLength);
-        endif;
-        
+        }
+
         return $value;
     }
-    
+
     private function callMethods($obj, $insertedEntities)
     {
         foreach ($this->getModifiers() as $modifier) {
             $modifier($obj, $insertedEntities);
         }
     }
-    
+
     private function getUserFormatters()
     {
         return $this->userFormatters;
     }
-    
+
     /**
      * @param mixed $userFormatters
      */

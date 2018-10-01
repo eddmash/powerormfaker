@@ -23,52 +23,51 @@ use Symfony\Component\Console\Output\OutputInterface;
 class Generatedata extends Command
 {
     public $help = 'Generate sample data for your models.';
-    
+
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function handle(InputInterface $input, OutputInterface $output)
     {
         try {
             $connection = BaseOrm::getDbConnection();
-            
+
             $faker = Factory::create();
-            
+
             $seed = $input->getOption('seed');
-            if ($seed):
+            if ($seed) {
                 $faker->seed($seed);
-            endif;
+            }
             $populator = new Populator($faker);
-            
+
             $only = $input->getOption('only');
-            
-            if ($only) :
+
+            if ($only) {
                 $models = $this->getModels($only);
-            else:
-                
+            } else {
                 $models = BaseOrm::getRegistry()->getModels(true);
-                
+
                 $ignore = $input->getOption('ignore');
-                if ($ignore) :
+                if ($ignore) {
                     // just a check to ensure we have the model provided
-                    foreach ($ignore as $item) :
+                    foreach ($ignore as $item) {
                         BaseOrm::getRegistry()->getModel($item);
-                    endforeach;
+                    }
                     // get remaining only
                     $only = array_diff(array_keys($models), $ignore);
                     $models = $this->getModels($only);
-                endif;
-            endif;
-            
-            if (!$models):
+                }
+            }
+
+            if (!$models) {
                 throw new CommandError('Sorry could not locate models');
-            endif;
-            
+            }
+
             $number = $input->getOption('records');
-            if (!$number):
+            if (!$number) {
                 $number = 5;
-            endif;
-            
+            }
+
             $ignore = array_change_key_case(
                 array_flip($input->getOption('ignore')),
                 CASE_LOWER
@@ -77,32 +76,30 @@ class Generatedata extends Command
                 array_flip($input->getOption('only')),
                 CASE_LOWER
             );
-            
-            if ($ignore && $only):
+
+            if ($ignore && $only) {
                 throw new CommandError(
-                    "Its not allowed to set both ".
+                    'Its not allowed to set both '.
                     "'only' and 'ignore' options at the same time"
                 );
-            endif;
-            
+            }
+
             /** @var $model Model */
-            foreach ($models as $name => $model) :
-                
+            foreach ($models as $name => $model) {
                 if ($model->getMeta()->autoCreated ||
-                    array_key_exists(strtolower($name), $ignore)):
+                    array_key_exists(strtolower($name), $ignore)) {
                     continue;
-                endif;
-                
+                }
+
                 $populator->addModel($model, $number);
-            endforeach;
-            
+            }
+
             $populator->execute($connection, $output);
         } catch (\Exception $exception) {
             throw new CommandError($exception->getMessage());
         }
-        
     }
-    
+
     protected function configure()
     {
         $this->setName($this->guessCommandName())
@@ -138,14 +135,14 @@ class Generatedata extends Command
                  null
              );
     }
-    
+
     public function getModels($names = [])
     {
         $models = [];
-        foreach ($names as $name) :
+        foreach ($names as $name) {
             $models[] = BaseOrm::getRegistry()->getModel($name);
-        endforeach;
-        
+        }
+
         return $models;
     }
 }
