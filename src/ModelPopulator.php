@@ -6,6 +6,7 @@ use Eddmash\PowerOrm\Exception\FieldDoesNotExist;
 use Eddmash\PowerOrm\Model\Field\AutoField;
 use Eddmash\PowerOrm\Model\Field\CharField;
 use Eddmash\PowerOrm\Model\Field\Field;
+use Eddmash\PowerOrm\Model\Field\ManyToManyField;
 use Eddmash\PowerOrm\Model\Model;
 use Faker\Generator;
 use Faker\Guesser\Name;
@@ -301,7 +302,10 @@ class ModelPopulator
                         )
                     );
                 }
-                if ($obj->getMeta()->getField($fieldName)->manyToMany) {
+                /** @var $field ManyToManyField* */
+                $field = $obj->getMeta()->getField($fieldName);
+                if ($field->manyToMany &&
+                    (!is_string($field->relation->through) && $field->relation->through->getMeta()->autoCreated)) {
                     $obj->{$fieldName}->set($value);
                 }
             }
