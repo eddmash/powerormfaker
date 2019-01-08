@@ -17,10 +17,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 class Populator
 {
     protected $generator;
+
     protected $manager;
+
     protected $entities = [];
+
     protected $quantities = [];
+
     protected $generateId = [];
+
     protected $relationMap = [];
 
     /**
@@ -123,7 +128,7 @@ class Populator
 
         try {
             foreach ($sortedClasses as $class) {
-                $generateId = $this->generateId[$class];
+//                $generateId = $this->generateId[$class];
                 $number = $this->quantities[$class];
 
                 $output->writeln(sprintf('Populating %s :', $class));
@@ -132,7 +137,7 @@ class Populator
                     $entity = $this->entities[$class];
                     $insertedEntities[$class][] = $entity->execute(
                         $insertedEntities,
-                        $generateId
+                        $i
                     );
                     $progressBar->advance();
                 }

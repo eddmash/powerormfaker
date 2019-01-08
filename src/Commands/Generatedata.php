@@ -36,10 +36,10 @@ class Generatedata extends Command
         try {
             $component = BaseOrm::getInstance()->getComponent($app_name);
         } catch (ComponentException $e) {
-            throw new CommandError(sprintf("Could not find an application with the name %s", $app_name));
+            throw new CommandError(sprintf('Could not find an application with the name %s', $app_name));
         }
         if (!$component instanceof AppInterface) {
-            throw new CommandError(sprintf("is not an application %s, it does not implement %s", $app_name,
+            throw new CommandError(sprintf('is not an application %s, it does not implement %s', $app_name,
                 AppInterface::class));
         }
         try {
@@ -58,11 +58,11 @@ class Generatedata extends Command
             // assumes the app is using composer to autload using psr-4
             $namespace = sprintf("%s\%s", $component->getNamespace(), substr($component->getModelsPath(),
                 strrpos($component->getModelsPath(), DIRECTORY_SEPARATOR) + 1));
-            $namespace = ltrim($namespace, "\\");
+            $namespace = ltrim($namespace, '\\');
 
             $classnames = [];
             foreach ($onlys as $only) {
-                if (!strrpos($only, "\\")) {
+                if (!strrpos($only, '\\')) {
                     $classnames[] = sprintf("%s\%s", $namespace, $only);
                 } else {
                     $classnames[] = $only;
@@ -106,7 +106,7 @@ class Generatedata extends Command
 
             if ($ignore && $only) {
                 throw new CommandError(
-                    'Its not allowed to set both ' .
+                    'Its not allowed to set both '.
                     "'only' and 'ignore' options at the same time"
                 );
             }
@@ -142,7 +142,7 @@ class Generatedata extends Command
                 'seed',
                 '-s',
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
-                'Always the same generated data. ' .
+                'Always the same generated data. '.
                 'using the same seed produces the same results',
                 null
             )

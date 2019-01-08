@@ -17,15 +17,19 @@ use Faker\Guesser\Name;
 class ModelPopulator
 {
     public $generator;
+
     public $userFormatters;
+
     /**
      * @var Model
      */
     protected $model;
+
     /**
      * @var array
      */
     protected $columnFormatters = [];
+
     /**
      * @var array
      */
@@ -148,23 +152,21 @@ class ModelPopulator
             $relatedClass = $field->relation->getToModel();
             $relatedClass = (is_string($relatedClass)) ? $relatedClass :
                 $relatedClass->getMeta()->getNSModelName();
-            $index = 0;
             $unique = $field->isUnique();
             $optional = $field->isNull();
 
-            $formatters[$fieldName] = function ($generator, $object, $inserted) use (
+            $formatters[$fieldName] = function ($generator, $object, $inserted, $position) use (
                 $relatedClass,
-                &$index,
                 $unique,
                 $optional
             ) {
                 if (isset($inserted[$relatedClass])) {
+                    $choices = $inserted[$relatedClass];
                     if ($unique) {
                         $related = null;
-                        if (isset($inserted[$relatedClass][$index]) || !$optional) {
-                            $related = $inserted[$relatedClass][$index];
+                        if (isset($choices[$position]) || !$optional) {
+                            $related = $choices[$position];
                         }
-                        ++$index;
 
                         return $related;
                     }
@@ -222,23 +224,24 @@ class ModelPopulator
      * Insert one new record using the Entity class.
      *
      * @param array $insertedEntities a list of all inserted records ids per model
-     * @param bool  $generateId
+     * @param int   $position         the `nth` model to be generated for a specific class
      *
      * @return Model
      *
+     * @throws FieldDoesNotExist
      * @throws \Eddmash\PowerOrm\Exception\ValueError
      */
-    public function execute($insertedEntities, $generateId = false)
+    public function execute($insertedEntities, $position)
     {
         $class = $this->getClass();
         /** @var $obj Model */
         $obj = new $class();
 
-        $this->fillColumns($obj, $insertedEntities);
-        $this->callMethods($obj, $insertedEntities);
+        $this->fillColumns($obj, $insertedEntities, $position);
+        $this->callMethods($obj, $insertedEntities, $position);
 
         $obj->save();
-        $this->saveM2M($obj, $insertedEntities);
+        $this->saveM2M($obj, $insertedEntities, $position);
 
         return $obj;
     }
@@ -248,7 +251,7 @@ class ModelPopulator
      * @param       $insertedEntities
      * @author: Eddilbert Macharia (http://eddmash.com)<edd.cowan@gmail.com>
      */
-    private function fillColumns(Model $obj, $insertedEntities)
+    private function fillColumns(Model $obj, $insertedEntities, $position)
     {
         foreach ($this->columnFormatters as $fieldName => $format) {
             if (null !== $format) {
@@ -256,7 +259,7 @@ class ModelPopulator
                 // thrown by the formatter
                 try {
                     $value = is_callable($format) ?
-                        $format($this->generator, $obj, $insertedEntities) :
+                        $format($this->generator, $obj, $insertedEntities, $position) :
                         $format;
                 } catch (\InvalidArgumentException $ex) {
                     throw new \InvalidArgumentException(
@@ -283,15 +286,18 @@ class ModelPopulator
     /**
      * @param Model $obj
      * @param       $insertedEntities
+     * @param $position
+     *
+     * @throws FieldDoesNotExist
      * @author: Eddilbert Macharia (http://eddmash.com)<edd.cowan@gmail.com>
      */
-    private function saveM2M(Model $obj, $insertedEntities)
+    private function saveM2M(Model $obj, $insertedEntities, $position)
     {
         foreach ($this->columnFormatters as $fieldName => $format) {
             if (null !== $format) {
                 // Add some extended debugging information to any errors thrown by the formatter
                 try {
-                    $value = is_callable($format) ? $format($this->generator, $obj, $insertedEntities) : $format;
+                    $value = is_callable($format) ? $format($this->generator, $obj, $insertedEntities, $position) : $format;
                 } catch (\InvalidArgumentException $ex) {
                     throw new \InvalidArgumentException(
                         sprintf(
@@ -323,7 +329,7 @@ class ModelPopulator
         return $value;
     }
 
-    private function callMethods($obj, $insertedEntities)
+    private function callMethods($obj, $insertedEntities, $position)
     {
         foreach ($this->getModifiers() as $modifier) {
             $modifier($obj, $insertedEntities);
